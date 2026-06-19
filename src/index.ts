@@ -1,26 +1,74 @@
 import express from 'express';
-import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { z } from 'zod';
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.get('/health', (req, res) => {
-    res.json({ status: 'healthy', domain: 'chat', uptime: process.uptime() });
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: { origin: '*' }
 });
 
-app.post('/api/v1/process', (req, res) => {
-    const { payload } = req.body;
-    if (!payload) return res.status(400).json({ error: 'Missing payload' });
-    res.status(201).json({ 
-        success: true, 
-        processed: payload, 
-        timestamp: new Date().toISOString() 
+const MessageSchema = z.object({
+  roomId: z.string().uuid(),
+  userId: z.string(),
+  content: z.string().min(1).max(5000),
+  timestamp: z.string().datetime()
+});
+
+// In-memory simulation of Redis Pub/Sub
+const activeRooms = new Map<string, Set<string>>();
+
+io.on('connection', (socket) => {
+  console.log(`Client connected: ${socket.id}`);
+
+  socket.on('join_room', (roomId: string) => {
+    socket.join(roomId);
+    if (!activeRooms.has(roomId)) activeRooms.set(roomId, new Set());
+    activeRooms.get(roomId)?.add(socket.id);
+    
+    // Broadcast system event
+    io.to(roomId).emit('system_event', {
+      type: 'USER_JOINED',
+      usersInRoom: activeRooms.get(roomId)?.size
     });
+  });
+
+  socket.on('send_message', (payload: unknown) => {
+    try {
+      const msg = MessageSchema.parse(payload);
+      // In production, this would publish to Redis Streams
+      io.to(msg.roomId).emit('new_message', msg);
+    } catch (e) {
+      socket.emit('error', { message: 'Invalid message payload' });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    activeRooms.forEach((users, roomId) => {
+      if (users.has(socket.id)) {
+        users.delete(socket.id);
+        io.to(roomId).emit('system_event', {
+          type: 'USER_LEFT',
+          usersInRoom: users.size
+        });
+      }
+    });
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    activeConnections: io.engine.clientsCount,
+    activeRooms: activeRooms.size
+  });
 });
 
 if (require.main === module) {
-    app.listen(3000, () => console.log('TS-WebSocket-Chat API running on port 3000'));
+  httpServer.listen(3000, () => {
+    console.log('Real-time WebSocket Gateway running on port 3000');
+  });
 }
 
-export default app;
+export { app, httpServer, io };
