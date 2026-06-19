@@ -1,18 +1,18 @@
 # TS-WebSocket-Chat
 
-Real-time WebSocket chat server with broadcast and join/leave events.
+![CI](https://github.com/skylerblue333/TS-WebSocket-Chat/workflows/CI/badge.svg)
+
+Production-ready TypeScript Express API for chat operations.
+
+## Features
+- Fully typed Express handlers
+- Supertest integration testing
+- Docker containerization
+- GitHub Actions CI Pipeline
 
 ## Quick Start
-
 ```bash
-npm ci && npm test
+npm ci
+npm test
 npm run build && npm start
-```
-
-## Connect
-
-```js
-const ws = new WebSocket('ws://localhost:3001');
-ws.send(JSON.stringify({ type: 'join', username: 'Alice' }));
-ws.send(JSON.stringify({ type: 'message', text: 'Hello!' }));
 ```
