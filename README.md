@@ -1,34 +1,34 @@
 # TS-WebSocket-Chat
 
-![CI](https://github.com/skylerblue333/TS-WebSocket-Chat/workflows/CI/badge.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178c6.svg)
-![Node.js](https://img.shields.io/badge/Node.js-18.x-339933.svg)
-![Redis](https://img.shields.io/badge/Redis-Streams-DC382D.svg)
+Real-time chat server using Socket.io.
 
-A production-ready real-time messaging gateway built with Socket.io, Express, and strict Zod runtime schema validation.
+## 🚀 Overview
+This repository contains a professional implementation of **TS WebSocket Chat**. It is designed with clean code principles and focuses on functionality and reliability.
 
-## System Architecture
+## 🛠️ Tech Stack
+- **Primary Language**: TS
+- **Environment**: Node.js / Python / Rust (as applicable)
+- **Key Features**: 
+  - Modular architecture
+  - Clean implementation of core logic
+  - Scalable design
 
+## 📂 Getting Started
 
-```mermaid
-graph TD
-    Client[Web/Mobile Client] -->|WebSocket/WSS| Gateway[Node.js Gateway]
-    Client -->|GraphQL| Gateway
-    Gateway -->|Redis Pub/Sub| Cache[(Redis Streams)]
-    Gateway -->|Prisma| DB[(PostgreSQL)]
-    Cache --> Worker[Background Processor]
-```
+### Prerequisites
+- Ensure you have the latest version of the relevant runtime (Node.js, Python, or Rust) installed.
 
-
-## Elite Features
-- **Real-Time Pub/Sub**: Room-based broadcasting ready for Redis adapter scaling.
-- **Runtime Validation**: Strict Zod schemas for all incoming WebSocket payloads.
-- **Hybrid Architecture**: Co-located REST API and WebSocket server.
-
-## Quick Start
+### Installation
 ```bash
-docker-compose up -d redis
-npm ci
-npm test
-npm run build && npm start
+git clone https://github.com/skylerblue333/TS-WebSocket-Chat.git
+cd TS-WebSocket-Chat
 ```
+
+### Usage
+Follow the specific language conventions to run the project (e.g., `npm install`, `cargo build`, or `pip install -r requirements.txt`).
+
+## 🛡️ License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+Built by [Skyler Blue](https://github.com/skylerblue333)
