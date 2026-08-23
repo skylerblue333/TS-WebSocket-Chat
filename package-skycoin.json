@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "dependencies": { "socket.io": "^4.8.0" },
+  "devDependencies": { "typescript": "^5.0" }
+}
