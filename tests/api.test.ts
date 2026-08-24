@@ -18,6 +18,14 @@ function connectClient(): Promise<ClientSocket> {
   });
 }
 
+function waitForJoin(socket: ClientSocket): Promise<void> {
+  return new Promise((resolve) => {
+    socket.once('system_event', (event: { type?: string }) => {
+      if (event.type === 'USER_JOINED') resolve();
+    });
+  });
+}
+
 describe('Sky WebSocket Chat', () => {
   beforeAll((done) => {
     httpServer.listen(0, '127.0.0.1', done);
@@ -30,7 +38,7 @@ describe('Sky WebSocket Chat', () => {
   });
 
   afterAll((done) => {
-    io.close(() => httpServer.close(done));
+    io.close(done);
   });
 
   it('reports health, readiness, and bounded metrics', async () => {
@@ -46,8 +54,13 @@ describe('Sky WebSocket Chat', () => {
     const sender = await connectClient();
     const receiver = await connectClient();
 
+    const senderJoined = waitForJoin(sender);
     sender.emit('join_room', { roomId: ROOM_ID, userId: 'alice' });
+    await senderJoined;
+
+    const receiverJoined = waitForJoin(receiver);
     receiver.emit('join_room', { roomId: ROOM_ID, userId: 'bob' });
+    await receiverJoined;
 
     const received = new Promise<Record<string, unknown>>((resolve) => {
       receiver.once('new_message', resolve);
