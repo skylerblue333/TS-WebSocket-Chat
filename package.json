@@ -1,10 +1,12 @@
 {
   "name": "ts-websocket-chat",
   "version": "3.0.0",
+  "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --pretty false",
     "start": "node dist/index.js",
-    "test": "jest --forceExit"
+    "test": "jest --runInBand",
+    "check": "npm run build && npm test"
   },
   "dependencies": {
     "cors": "^2.8.5",
