@@ -18,7 +18,9 @@ function connectClient(): Promise<ClientSocket> {
 }
 
 describe('chat policy', () => {
-  beforeAll((done) => httpServer.listen(0, '127.0.0.1', done));
+  beforeAll((done) => {
+    httpServer.listen(0, '127.0.0.1', done);
+  });
 
   afterEach(() => {
     for (const socket of io.sockets.sockets.values()) socket.disconnect(true);
