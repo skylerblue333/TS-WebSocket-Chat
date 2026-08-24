@@ -1,17 +1,44 @@
-name: CI
-on: [push, pull_request]
+name: chat-ci
+
+on:
+  push:
+    branches: [main, "product/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm test
+          node-version: '22'
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Typecheck and build
+        run: npm run build
+      - name: Socket and HTTP integration tests
+        run: npm test -- --runInBand
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build image
+        run: docker build -t sky-chat:ci .
+      - name: Verify non-root image
+        run: test "$(docker image inspect sky-chat:ci --format '{{.Config.User}}')" = "node"
+      - name: Smoke-test runtime image
+        run: |
+          set -euo pipefail
+          docker run -d --name sky-chat-ci -p 3000:3000 sky-chat:ci
+          trap 'docker rm -f sky-chat-ci >/dev/null 2>&1 || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3000/healthz >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs sky-chat-ci
+          exit 1
