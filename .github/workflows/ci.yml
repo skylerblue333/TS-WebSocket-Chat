@@ -1,17 +1,45 @@
-name: CI
-on: [push, pull_request]
+name: websocket-chat-ci
+
+on:
+  push:
+    branches: [main, "product/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm test
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript build
+        run: npm run build
+      - name: Tests
+        run: npm test
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build image
+        run: docker build -t sky-websocket-chat:ci .
+      - name: Verify non-root image
+        run: |
+          user="$(docker image inspect sky-websocket-chat:ci --format '{{.Config.User}}')"
+          test -n "$user"
+          test "$user" != "0"
+          test "$user" != "root"
+      - name: Smoke test health endpoint
+        run: |
+          docker run -d --rm --name sky-websocket-chat-ci -p 13000:3000 sky-websocket-chat:ci
+          trap 'docker stop sky-websocket-chat-ci >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:13000/healthz | grep -q '"status":"ok"'; then exit 0; fi
+            sleep 1
+          done
+          docker logs sky-websocket-chat-ci
+          exit 1
