@@ -1,8 +1,18 @@
-FROM node:18-alpine
+FROM node:22-alpine AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
+COPY package.json ./
+RUN npm install --ignore-scripts
+COPY tsconfig.json ./
+COPY src ./src
 RUN npm run build
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+COPY package.json ./
+RUN npm install --omit=dev --ignore-scripts && npm cache clean --force
+COPY --from=build /app/dist ./dist
+USER node
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
