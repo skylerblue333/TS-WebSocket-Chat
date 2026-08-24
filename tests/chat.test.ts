@@ -29,7 +29,7 @@ describe('chat policy', () => {
   });
 
   afterAll((done) => {
-    io.close(() => httpServer.close(done));
+    io.close(done);
   });
 
   it('rejects messages from a socket that has not joined', async () => {
