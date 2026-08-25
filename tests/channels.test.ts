@@ -1,5 +1,6 @@
-import { validate as validateUuid } from "uuid";
 import { ChannelRegistry } from "../src/channels";
+
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 describe("SkyChannels domain core", () => {
   it("creates a private channel with immutable owner membership", () => {
@@ -8,7 +9,7 @@ describe("SkyChannels domain core", () => {
     expect(channel.visibility).toBe("private");
     expect(channel.members).toEqual([{ userId: "user.owner", role: "owner" }]);
     expect(channel.realtimeTransportConnected).toBe(false);
-    expect(validateUuid(channel.roomId)).toBe(true);
+    expect(UUID_V4.test(channel.roomId)).toBe(true);
     expect(() => registry.removeMember("creator.one", "user.owner", "user.owner")).toThrow("owner_role_immutable");
   });
 
