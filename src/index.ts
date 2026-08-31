@@ -14,8 +14,14 @@ function configuredOrigins(): string[] {
     .filter(Boolean);
 }
 
+function originAllowed(origin: string | undefined): boolean {
+  if (origin === undefined) return true;
+  return configuredOrigins().includes(origin);
+}
+
 const io = new Server(httpServer, {
   cors: { origin: configuredOrigins() },
+  allowRequest: (request, callback) => callback(null, originAllowed(request.headers.origin)),
   maxHttpBufferSize: 64 * 1024,
   pingTimeout: 20_000,
   pingInterval: 25_000,
@@ -161,4 +167,4 @@ if (require.main === module) {
   });
 }
 
-export { app, httpServer, io };
+export { app, httpServer, io, originAllowed };
