@@ -1,6 +1,6 @@
 import { io as Client, type Socket as ClientSocket } from "socket.io-client";
 import request from "supertest";
-import { app, httpServer, io } from "../src/index";
+import { app, httpServer, io, originAllowed } from "../src/index";
 
 const roomId = "123e4567-e89b-12d3-a456-426614174000";
 let baseUrl: string;
@@ -36,6 +36,16 @@ describe("Sky Chat gateway", () => {
     const ready = await request(app).get("/readyz");
     expect(ready.status).toBe(200);
     expect(ready.body.status).toBe("ready");
+  });
+
+  it("rejects browser websocket origins outside the configured allowlist", () => {
+    const previous = process.env.CORS_ORIGINS;
+    process.env.CORS_ORIGINS = "https://allowed.example";
+    expect(originAllowed("https://allowed.example")).toBe(true);
+    expect(originAllowed("https://evil.example")).toBe(false);
+    expect(originAllowed(undefined)).toBe(true);
+    if (previous === undefined) delete process.env.CORS_ORIGINS;
+    else process.env.CORS_ORIGINS = previous;
   });
 
   it("rejects invalid room identifiers", (done) => {
